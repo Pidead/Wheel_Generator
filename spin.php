@@ -1,31 +1,33 @@
 <?php
-session_start();                      // must be the very first line
+session_start();
 include "wheel_lib.php";
- 
+
 $title = $_POST["title"];
 $theme = $_POST["theme"];
 $speed = $_POST["speed"];
 $items = cleanItems($_POST["options"]);
 $count = count($items);
- 
+
 if ($count < 2)
 {
     echo "Please enter at least 2 options. <a href='create.html'>Back</a>";
     exit;
 }
- 
+
 if ($speed == "fast") { $seconds = 3; }
 else { $seconds = 6; }
- 
+
 $winnerIndex = rand(0, $count - 1);
 $winner = $items[$winnerIndex];
- 
-setcookie("lasttheme", $theme, time() + (86400 * 30), "/");
- 
-if (!isset($_SESSION["history"]))
+
+$saveMessage = "";
+if (isset($_POST["save"]))
 {
-    $_SESSION["history"] = array();
+    include "save_wheel.php";
 }
+
+setcookie("lasttheme", $theme, time() + (86400 * 30), "/");
+if (!isset($_SESSION["history"])) { $_SESSION["history"] = array(); }
 $_SESSION["history"][] = $winner;
 ?>
 <html>
@@ -38,10 +40,13 @@ $_SESSION["history"][] = $winner;
 
 <?php drawWheel($items, $theme, $winnerIndex, $seconds); ?>
 
+<p class="winner" style="animation-delay: <?php echo $seconds; ?>s">
+   Winner: <?php echo htmlspecialchars($winner); ?>
+</p>
 <p>Theme: <?php echo $theme; ?> |
    Options: <?php echo $count; ?> |
    Spin time: <?php echo $seconds; ?> seconds</p>
- 
+
 <ol>
 <?php
 for ($i = 0; $i < $count; $i++)
@@ -50,10 +55,8 @@ for ($i = 0; $i < $count; $i++)
 }
 ?>
 </ol>
- 
-<p class="winner" style="animation-delay: <?php echo $seconds; ?>s">
-   Winner: <?php echo htmlspecialchars($winner); ?>
-</p>
+
+<?php echo $saveMessage; ?>
 
 <h3>Winners so far (this visit)</h3>
 <ul>
@@ -67,16 +70,14 @@ while ($i < count($history))
 }
 ?>
 </ul>
- 
+
 <p>Last theme cookie:
 <?php
 if (isset($_COOKIE["lasttheme"])) { echo $_COOKIE["lasttheme"]; }
 else { echo "(reload the page to see it)"; }
 ?></p>
- 
+
 <a href="reset.php">Clear history</a>
-
-
 <a href="create.html">Make another wheel</a>
 </body>
 </html>
